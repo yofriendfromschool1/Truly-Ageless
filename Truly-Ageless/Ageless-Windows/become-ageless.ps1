@@ -17,7 +17,7 @@
 #
 #  Forked from: Ageless Linux (https://agelesslinux.org)
 #  Original author: |VOID| (rowlandkhd@gmail.com)
-#  Repository: https://github.com/YOUR_USERNAME/Truly-Ageless
+#  Repository: https://github.com/yofriendfromschool1/Truly-Ageless
 #
 #  SPDX-License-Identifier: Unlicense
 # ============================================================================
