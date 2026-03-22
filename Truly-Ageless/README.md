@@ -66,7 +66,7 @@ sudo ./become-ageless.sh --accept --flagrant
 sudo ./become-ageless.sh --accept --persistent
 
 # Remote install
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/Truly-Ageless/main/become-ageless.sh | sudo bash -s -- --accept
+curl -fsSL https://raw.githubusercontent.com/yofriendfromschool1/Truly-Ageless/main/become-ageless.sh | sudo bash -s -- --accept
 
 # Revert everything
 sudo ./become-ageless.sh --revert
@@ -280,7 +280,7 @@ Please maintain the tone and spirit of the project. We are serious about civil d
 
 ## License
 
-This project is released into the **public domain** under the [Unlicense](LICENSE).
+This project is released into the **public domain** under the [Unlicense](../LICENSE).
 
 You can copy it, modify it, distribute it, sell it, burn it, print it on USB drive labels, or hand it to a child at a school STEM fair. No permission needed. No attribution required. No warranty provided.
 
