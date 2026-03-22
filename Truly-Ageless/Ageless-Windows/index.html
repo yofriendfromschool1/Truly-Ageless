@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ageless Windows — We Don't Ask</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0b; --bg-warm: #0e0d0c; --surface: #141413; --surface-2: #1a1918;
+    --surface-3: #222120; --border: #2c2a28; --border-hover: #444240;
+    --cream: #f0ece4; --cream-dim: #b8b4aa; --cream-muted: #706e68;
+    --red: #e63127; --red-dim: rgba(230,49,39,0.12); --red-glow: rgba(230,49,39,0.06);
+    --orange: #ff6d3a; --green: #8ec97a;
+    --display: 'Instrument Serif', Georgia, serif;
+    --body: 'DM Sans', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  html { font-size: 16px; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg); scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--cream); font-family: var(--body); overflow-x: hidden; -webkit-font-smoothing: antialiased; cursor: none; }
+  ::selection { background: var(--red); color: #fff; }
+  a, button { cursor: none; }
+  .gavel { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 10000; transform: translate(-16px, -16px); }
+  .gavel svg { width: 32px; height: 32px; transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 90% 12%; }
+  .gavel.smack svg { transform: rotate(-22deg) scale(1.15); }
+  .gavel.h svg { width: 40px; height: 40px; }
+  .impact { position: fixed; pointer-events: none; z-index: 9999; }
+  .impact-flash { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: radial-gradient(circle, rgba(230,49,39,0.8), rgba(230,49,39,0) 70%); transform: translate(-50%, -50%); animation: impactFlash 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+  .impact-shockwave { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border: 1px solid rgba(230,49,39,0.6); border-radius: 50%; transform: translate(-50%, -50%); animation: shockwave 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .impact-spark { position: absolute; top: 50%; left: 50%; width: 3px; height: 3px; background: var(--red); border-radius: 50%; transform-origin: center; pointer-events: none; }
+  .impact-spark.size-1 { width: 2px; height: 2px; animation: sparkFly 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .impact-spark.size-2 { width: 4px; height: 4px; animation: sparkFly 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .impact-spark.size-3 { width: 6px; height: 6px; animation: sparkFly 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .impact-crackle { position: absolute; top: 50%; left: 50%; width: 2px; height: 2px; background: var(--red); border-radius: 50%; transform: translate(-50%, -50%); animation: crackle 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0.8; }
+  @keyframes impactFlash { 0% { width: 0; height: 0; opacity: 1; } 100% { width: 80px; height: 80px; opacity: 0; } }
+  @keyframes shockwave { 0% { width: 0; height: 0; opacity: 0.8; border-width: 2px; } 50% { opacity: 0.4; border-width: 1.5px; } 100% { width: 120px; height: 120px; opacity: 0; border-width: 0.5px; } }
+  @keyframes sparkFly { 0% { opacity: 1; transform: translate(-50%, -50%) translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0); } }
+  @keyframes crackle { 0% { opacity: 1; transform: translate(-50%, -50%) translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--cx), var(--cy)) scale(0.3); } }
+
+
+
+  .rv { opacity: 0; transform: translateY(50px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
+  .rv.v { opacity: 1; transform: translateY(0); }
+  .rv.d1 { transition-delay: .08s } .rv.d2 { transition-delay: .16s } .rv.d3 { transition-delay: .24s } .rv.d4 { transition-delay: .32s } .rv.d5 { transition-delay: .4s }
+
+  @keyframes fadeIn { to { opacity: 1 } }
+  @keyframes navIn { to { transform: translateY(0) } }
+  @keyframes heroUp { from { opacity: 0; transform: translateY(50px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes strike { to { transform: scaleX(1) } }
+  @keyframes scroll { to { transform: translateX(-50%) } }
+  @keyframes docIn { to { opacity: 1; transform: translateY(0) rotate(1.5deg) } }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .5 } }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0 clamp(1.5rem,4vw,4rem); height: 72px; display: flex; align-items: center; justify-content: space-between; background: rgba(10,10,11,0.65); backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%); border-bottom: 1px solid rgba(44,42,40,0.5); transform: translateY(-100%); animation: navIn .8s .3s var(--ease) forwards; }
+  .nl { display: flex; align-items: center; gap: .5rem; text-decoration: none; color: var(--cream); }
+  .nw { font-family: var(--mono); font-size: .85rem; font-weight: 700; letter-spacing: -.02em; }
+  .nw .sep { color: var(--red); margin: 0 .15rem; font-weight: 400; }
+  .nr { display: flex; align-items: center; gap: 2.5rem; }
+  .nk { font-size: .82rem; font-weight: 500; color: var(--cream-muted); text-decoration: none; transition: color .25s; position: relative; }
+  .nk::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 1px; background: var(--cream); transform: scaleX(0); transform-origin: right; transition: transform .4s var(--ease); }
+  .nk:hover { color: var(--cream); }
+  .nk:hover::after { transform: scaleX(1); transform-origin: left; }
+  .nb { font-family: var(--mono); font-size: .78rem; font-weight: 500; background: var(--cream); color: var(--bg); padding: .6rem 1.3rem; border-radius: 100px; border: none; text-decoration: none; transition: all .3s var(--ease); }
+  .nb:hover { background: var(--red); color: #fff; transform: scale(1.04); }
+  .hero { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; padding-top: 72px; position: relative; overflow: hidden; }
+  .hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 200px; background: linear-gradient(to top, var(--bg), transparent); z-index: 2; pointer-events: none; }
+  .hc { display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem,5vw,6rem); padding-right: clamp(1rem,3vw,3rem); z-index: 1; }
+  .he { font-family: var(--mono); font-size: .72rem; font-weight: 500; color: var(--red); letter-spacing: .18em; text-transform: uppercase; margin-bottom: 2.5rem; display: flex; align-items: center; gap: 1rem; opacity: 0; animation: fadeIn .6s .6s var(--ease) forwards; }
+  .he::before { content: ''; width: 32px; height: 1px; background: var(--red); }
+  .hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(3.2rem,6.5vw,7.5rem); line-height: .95; letter-spacing: -.03em; opacity: 0; animation: heroUp 1s .4s var(--ease) forwards; }
+  .hero h1 i { color: var(--red); font-style: italic; }
+  .hero h1 s { text-decoration: none; position: relative; color: var(--cream-muted); }
+  .hero h1 s::after { content: ''; position: absolute; left: -2%; right: -2%; top: 52%; height: 3px; background: var(--red); transform: scaleX(0); transform-origin: left; animation: strike .6s 1.4s var(--ease) forwards; }
+  .hd { margin-top: 2.5rem; font-size: 1.05rem; font-weight: 300; color: var(--cream-dim); line-height: 1.75; max-width: 440px; opacity: 0; animation: fadeIn .8s .9s var(--ease) forwards; }
+  .hd strong { color: var(--cream); font-weight: 600; }
+  .hb { margin-top: 3rem; display: flex; gap: 1rem; opacity: 0; animation: heroUp .8s 1.1s var(--ease) forwards; }
+  .mb { position: relative; font-family: var(--mono); font-size: .82rem; font-weight: 500; padding: 1rem 2.2rem; border-radius: 100px; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: .6rem; transition: transform .4s var(--ease), box-shadow .4s var(--ease); overflow: hidden; }
+  .mbf { background: var(--red); color: #fff; }
+  .mbf:hover { box-shadow: 0 0 40px var(--red-dim), 0 12px 40px rgba(0,0,0,.4); transform: translateY(-2px) scaleX(1.05); }
+  .mbo { background: transparent; color: var(--cream); border: 1px solid var(--border); }
+  .mbo:hover { border-color: var(--cream-muted); transform: translateY(-2px) scaleX(1.02); }
+  .mb.h { transform: translateY(-2px); }
+  .mb .ar { display: inline-block; transition: transform .3s var(--ease); }
+  .mb:hover .ar { transform: translateX(4px); }
+
+  .hv { display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: var(--bg-warm); border-left: 1px solid var(--border); }
+  .rd { width: 340px; padding: 3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-family: var(--mono); font-size: .72rem; color: var(--cream-muted); line-height: 2.2; position: relative; box-shadow: 0 40px 100px rgba(0,0,0,.5); opacity: 0; transform: translateY(30px) rotate(1.5deg); animation: docIn 1.2s .8s var(--ease) forwards; transition: transform 0.3s, box-shadow 0.3s; }
+  .rd.h, .rd:hover { transform: translateY(30px) rotate(1.5deg) scale(1.02); box-shadow: 0 40px 100px rgba(0,0,0,.5), 0 0 30px rgba(230,49,39,0.25); }
+  .rd::before { content: 'CLASSIFIED — AB 1043 COMPLIANCE FORM'; display: block; font-size: .65rem; font-weight: 700; letter-spacing: .15em; color: var(--red); padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .rx { background: var(--red); color: var(--red); padding: 0 .3rem; border-radius: 2px; user-select: none; }
+  .rd .st { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-18deg); font-size: 1.8rem; font-weight: 700; color: var(--red); opacity: .25; letter-spacing: .15em; border: 3px solid var(--red); padding: .3rem 1rem; white-space: nowrap; }
+  .tk { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); padding: 1.1rem 0; overflow: hidden; position: relative; z-index: 3; }
+  .tt { display: flex; width: max-content; animation: scroll 40s linear infinite; }
+  .ti { font-family: var(--mono); font-size: .72rem; font-weight: 500; color: var(--cream-muted); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; padding: 0 2rem; display: flex; align-items: center; gap: 2rem; }
+  .td { width: 4px; height: 4px; background: var(--red); border-radius: 50%; flex-shrink: 0; }
+  .sc { padding: clamp(5rem,10vw,9rem) clamp(1.5rem,4vw,4rem); }
+  .si { max-width: 1280px; margin: 0 auto; }
+  .ey { font-family: var(--mono); font-size: .68rem; font-weight: 500; color: var(--red); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .hx { font-family: var(--display); font-weight: 400; font-size: clamp(2.4rem,5vw,4.2rem); line-height: 1.05; letter-spacing: -.025em; max-width: 680px; }
+  .hx i { font-style: italic; color: var(--red); }
+  .bt { font-size: 1.05rem; font-weight: 300; color: var(--cream-dim); line-height: 1.75; max-width: 540px; margin-top: 1.5rem; }
+  .ls { background: var(--surface); border-top: 1px solid var(--border); }
+  .lh { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; }
+  .scroll-hint { font-family: var(--mono); font-size: .75rem; color: var(--cream-muted); letter-spacing: .1em; display: flex; align-items: center; gap: 1rem; opacity: 0.8; }
+  .scroll-btn { font-family: var(--mono); font-size: .75rem; color: var(--cream-muted); letter-spacing: .1em; background: none; border: 1px solid var(--border); padding: .5rem 1rem; border-radius: 4px; cursor: pointer; transition: all .3s var(--ease); display: inline-flex; align-items: center; gap: 0.5rem; }
+  .scroll-btn:hover { color: var(--red); border-color: var(--red); }
+  @keyframes scrollBob { 0%, 100% { transform: translateX(0); opacity: 0.6; } 50% { transform: translateX(4px); opacity: 1; } }
+  .lsw { overflow-x: auto; overflow-y: hidden; margin: 0 -1.5rem; padding: 0 1.5rem 2rem 1.5rem; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth; }
+  .lsw::-webkit-scrollbar { display: none; }
+  .lcs { display: flex; gap: 1.25rem; width: max-content; padding-right: 2rem; }
+  .lc { width: 380px; flex-shrink: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; position: relative; transition: border-color .4s, transform .5s var(--ease), box-shadow .4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .lc:hover { border-color: var(--border-hover); transform: translateY(-8px) rotateX(2deg); box-shadow: 0 20px 60px rgba(230,49,39,0.15); }
+  .lc.h { transform: translateY(-8px) rotateX(2deg); box-shadow: 0 20px 60px rgba(230,49,39,0.15); border-color: var(--border-hover); }
+  .li { font-family: var(--display); font-size: 4rem; font-style: italic; color: var(--surface-3); line-height: 1; margin-bottom: 1.5rem; transition: color .4s; }
+  .lc:hover .li, .lc.h .li { color: var(--red-dim); }
+  .lk { font-family: var(--mono); font-size: .68rem; font-weight: 500; color: var(--red); letter-spacing: .1em; margin-bottom: 1rem; }
+  .lc h3 { font-family: var(--display); font-size: 1.4rem; font-weight: 400; margin-bottom: .85rem; line-height: 1.2; }
+  .lc p { font-size: .9rem; color: var(--cream-dim); line-height: 1.7; }
+  .lr { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: .75rem; font-weight: 700; color: var(--red); display: flex; align-items: center; gap: .6rem; }
+  .lr::before { content: ''; width: 6px; height: 6px; background: var(--red); border-radius: 50%; }
+  .dh { font-family: var(--mono); font-size: .72rem; color: var(--cream-muted); }
+  .sg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 4rem; background: var(--border); border-radius: 16px; overflow: hidden; }
+  .st2 { background: var(--surface); padding: 3rem 2rem; text-align: center; transition: background .3s, transform .3s var(--ease); }
+  .st2:hover { background: var(--surface-2); transform: scale(1.05); }
+  .st2.h { background: var(--surface-2); transform: scale(1.05); }
+  .sv { font-family: var(--display); font-size: clamp(3rem,5vw,4.5rem); font-style: italic; color: var(--cream); line-height: 1; margin-bottom: .75rem; }
+  .sv .r { color: var(--red); }
+  .sl { font-family: var(--mono); font-size: .7rem; font-weight: 500; color: var(--cream-muted); letter-spacing: .08em; text-transform: uppercase; }
+  .ss { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .shl { display: flex; flex-direction: column; margin-top: 4rem; }
+  .sr { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 3rem; align-items: start; padding: 3rem 0; border-top: 1px solid var(--border); margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; }
+  .sr:hover { background: rgba(255,255,255,.02); }
+  .sx { font-family: var(--display); font-size: 5rem; font-style: italic; color: var(--surface-3); line-height: .85; }
+  .sr:hover .sx { color: var(--red-dim); }
+  .stt { font-family: var(--display); font-size: 1.6rem; line-height: 1.2; margin-bottom: .75rem; }
+  .sd { font-size: .95rem; color: var(--cream-dim); line-height: 1.7; }
+  .sdt { font-size: .88rem; color: var(--cream-muted); line-height: 1.7; padding-top: .25rem; }
+  .sdt code { font-family: var(--mono); font-size: .82rem; background: var(--surface-2); border: 1px solid var(--border); padding: .15rem .5rem; border-radius: 4px; color: var(--red); }
+  .sdt a { color: var(--red); }
+  .cs { background: var(--bg-warm); border-top: 1px solid var(--border); }
+  .cl { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem,5vw,5rem); align-items: center; margin-top: 3rem; }
+  .cw { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+  .cc { display: flex; align-items: center; gap: 6px; padding: 14px 18px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+  .cd2 { width: 10px; height: 10px; border-radius: 50%; }
+  .cd2:nth-child(1) { background: #ff5f57; } .cd2:nth-child(2) { background: #febc2e; } .cd2:nth-child(3) { background: #28c840; }
+  .cn { margin-left: 10px; font-family: var(--mono); font-size: .7rem; color: var(--cream-muted); }
+  .cb { padding: 2rem; font-family: var(--mono); font-size: .78rem; line-height: 2; color: var(--cream-dim); overflow-x: auto; white-space: pre; }
+  .cb .c { color: var(--cream-muted); } .cb .k { color: var(--red); } .cb .s { color: var(--green); } .cb .f { color: var(--orange); }
+  .bs { padding: clamp(6rem,14vw,12rem) clamp(1.5rem,4vw,4rem); text-align: center; position: relative; overflow: hidden; }
+  .bs::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 50% at center, var(--red-glow), transparent); pointer-events: none; }
+  .bst { font-family: var(--display); font-weight: 400; font-size: clamp(2.8rem,7vw,6rem); line-height: 1.05; letter-spacing: -.03em; max-width: 950px; margin: 0 auto; position: relative; }
+  .bst .m { color: var(--cream-muted); }
+  .bss { font-size: 1rem; color: var(--cream-dim); margin-top: 2.5rem; font-weight: 300; position: relative; }
+  .al { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+  .ag { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(3rem,6vw,6rem); align-items: center; margin-top: 3rem; }
+  .av { display: flex; align-items: center; justify-content: center; gap: 2rem; }
+  .ao { width: 110px; height: 110px; border-radius: 16px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.3; font-family: var(--mono); font-size: .8rem; font-weight: 700; letter-spacing: -.02em; border: 2px solid; }
+  .ao.aw { border-color: var(--red); color: var(--red); background: var(--red-dim); } .ao.a2 { border-color: var(--cream-dim); color: var(--cream); background: rgba(240,236,228,0.06); }
+  .ax { font-family: var(--mono); font-size: .75rem; color: var(--cream-muted); letter-spacing: .1em; }
+  .at h3 { font-family: var(--display); font-size: clamp(1.8rem,3vw,2.5rem); line-height: 1.15; margin-bottom: 1.25rem; }
+  .at h3 i { font-style: italic; color: var(--red); }
+  .at p { font-size: .95rem; color: var(--cream-dim); line-height: 1.75; margin-bottom: 1.5rem; }
+  .at p strong { color: var(--cream); font-weight: 600; }
+  .ak { font-family: var(--mono); font-size: .82rem; font-weight: 500; color: var(--cream); text-decoration: none; display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; border: 1px solid var(--border); border-radius: 100px; transition: all .3s var(--ease); }
+  .ak:hover { border-color: var(--red); color: var(--red); transform: translateX(4px); }
+  .ak .aar { transition: transform .3s var(--ease); }
+  .ak:hover .aar { transform: translateX(4px); }
+  .fs { border-top: 1px solid var(--border); }
+  .fl { margin-top: 3rem; max-width: 800px; }
+  .fi { border-bottom: 1px solid var(--border); transition: background 0.3s ease; }
+  .fi:first-child { border-top: 1px solid var(--border); }
+  .fi.h { background: rgba(230,49,39,0.05); }
+  .ft { width: 100%; background: none; border: none; color: var(--cream); font-family: var(--body); font-size: 1.05rem; font-weight: 500; text-align: left; padding: 1.75rem 0; display: flex; justify-content: space-between; align-items: center; transition: color .25s; cursor: pointer; }
+  .ft:hover { color: var(--red); }
+  .fi.h .ft { color: var(--red); }
+  .fic { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .9rem; color: var(--cream-muted); transition: all .4s var(--ease); }
+  .fi.open .fic { transform: rotate(45deg); border-color: var(--red); color: var(--red); background: var(--red-dim); }
+  .fb { overflow: hidden; height: 0; transition: height .5s var(--ease); }
+  .fbi { padding: 0 0 1.75rem 0; }
+  .fbi p { font-size: .95rem; color: var(--cream-dim); line-height: 1.75; max-width: 640px; }
+
+  /* DOWNLOAD */
+  .ds { border-top: 1px solid var(--border); background: var(--surface); text-align: center; padding: clamp(5rem,10vw,9rem) clamp(1.5rem,4vw,4rem); }
+  .ds .hx { margin: 0 auto; max-width: 600px; text-align: center; }
+  .ds .bt { margin: 1.5rem auto 3rem; text-align: center; }
+  .db { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .dl { font-family: var(--mono); font-size: .85rem; font-weight: 500; padding: 1.1rem 2.5rem; border-radius: 100px; text-decoration: none; display: inline-flex; align-items: center; gap: .75rem; transition: all .35s var(--ease); border: none; cursor: pointer; }
+  .dlp { background: var(--cream); color: var(--bg); }
+  .dlp:hover { background: var(--red); color: #fff; transform: translateY(-3px); box-shadow: 0 12px 40px var(--red-dim); }
+  .dlg { background: transparent; color: var(--cream); border: 1px solid var(--border); }
+  .dlg:hover { border-color: var(--cream-muted); transform: translateY(-3px); }
+  .dll { font-size: .72rem; color: var(--cream-muted); font-weight: 400; }
+  .dlp .dll { color: rgba(10,10,11,.5); }
+  .dlp:hover .dll { color: rgba(255,255,255,.6); }
+  footer { border-top: 1px solid var(--border); padding: 4rem clamp(1.5rem,4vw,4rem); }
+  .fin { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 3rem; }
+  .fbn { font-family: var(--mono); font-weight: 700; font-size: .85rem; margin-bottom: 1rem; }
+  .fbd { font-size: .85rem; color: var(--cream-muted); line-height: 1.65; max-width: 320px; }
+  .fbd a { color: var(--cream-dim); text-decoration: underline; }
+  .fct { font-family: var(--mono); font-size: .68rem; font-weight: 700; color: var(--cream-muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 1.25rem; }
+  .fc a { display: block; font-size: .88rem; color: var(--cream-dim); text-decoration: none; padding: .35rem 0; transition: color .2s; }
+  .fc a:hover { color: var(--cream); }
+  .fbar { max-width: 1280px; margin: 3rem auto 0; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .fbar p { font-family: var(--mono); font-size: .72rem; color: var(--cream-muted); }
+  .fbar .df { color: var(--red); }
+
+  @media (max-width: 1024px) {
+    .hero { grid-template-columns: 1fr; } .hv { display: none; }
+    .cl { grid-template-columns: 1fr; } .ag { grid-template-columns: 1fr; }
+    .av { justify-content: flex-start; }
+    .sr { grid-template-columns: 80px 1fr; } .sdt { display: none; }
+  }
+  @media (max-width: 768px) {
+    .nk { display: none; } .sg { grid-template-columns: repeat(2, 1fr); }
+    .sr { grid-template-columns: 60px 1fr; gap: 1.5rem; } .sx { font-size: 3rem; }
+    .fin { grid-template-columns: 1fr; } body { cursor: auto; } .gavel { display: none; }
+  }
+  @media (max-width: 480px) { .sg { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="gavel" id="cur">
+  <svg viewBox="796 796 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g fill="#f0ece4">
+      <path d="M936.46,868.211c4.939,4.94,12.946,4.938,17.884,0c4.94-4.938,4.941-12.946,0-17.885l-50.619-50.622 c-4.94-4.94-12.947-4.938-17.887,0c-4.939,4.938-4.939,12.946,0,17.885L936.46,868.211z"/>
+      <path d="M817.588,885.841c-4.938-4.94-12.946-4.94-17.884,0c-4.939,4.938-4.941,12.945,0,17.885l50.619,50.619 c4.94,4.94,12.946,4.94,17.887,0c4.94-4.938,4.94-12.946,0-17.886L817.588,885.841z"/>
+      <path d="M989.605,963.929l-75.06-63.993c3.388-3.902,6.598-7.964,9.563-12.216l1.549-2.22c3.202-4.592,2.651-10.82-1.308-14.779 L883.328,829.7c-3.959-3.959-10.187-4.509-14.779-1.307l-3.618,2.523c-13.254,9.244-24.769,20.759-34.014,34.012l-2.524,3.619 c-3.203,4.593-2.653,10.822,1.306,14.78l41.023,41.021c3.959,3.959,10.186,4.51,14.778,1.307l2.22-1.549 c4.25-2.964,8.312-6.172,12.213-9.558l63.994,75.058c3.297,3.867,8.06,6.181,13.136,6.38c5.079,0.202,10.01-1.725,13.603-5.317 c3.595-3.593,5.522-8.523,5.32-13.602C995.785,971.988,993.471,967.227,989.605,963.929z"/>
+    </g>
+  </svg>
+</div>
+
+<nav>
+  <a href="#" class="nl"><span class="nw">ageless<span class="sep">/</span>windows</span></a>
+  <div class="nr">
+    <a href="#law" class="nk">The Law</a>
+    <a href="#how" class="nk">How It Works</a>
+    <a href="#alliance" class="nk">The Alliance</a>
+    <a href="#faq" class="nk">FAQ</a>
+    <a href="#download" class="nb">Download</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hc">
+    <div class="he">Civil disobedience in PowerShell</div>
+    <h1>California wants<br>to <s>know your age</s><br><i>We said no.</i></h1>
+    <p class="hd">Ageless Windows makes your device <strong>intentionally and legally noncompliant</strong> with California's age surveillance mandate. No data collected. No API. No apologies.</p>
+    <div class="hb">
+      <a href="#download" class="mb mbf">Download the script <span class="ar">&rarr;</span></a>
+      <a href="#law" class="mb mbo">Read the law</a>
+    </div>
+  </div>
+  <div class="hv">
+    <div class="rd">
+      User Full Name: <span class="rx">REDACTED</span><br>
+      Date of Birth: <span class="rx">REFUSED</span><br>
+      Age Bracket: <span class="rx">NOT COLLECTED</span><br>
+      Verification Status: <span class="rx">NONCOMPLIANT</span><br><br>
+      API Response: <span style="color:var(--red)">ERROR</span><br>
+      Signal Sent: <span style="color:var(--red)">NONE</span><br>
+      Data Stored: <span style="color:var(--red)">ZERO BYTES</span><br><br>
+      Compliance: <span style="color:var(--red)">INTENTIONALLY</span><br>
+      <span style="color:var(--red);margin-left:92px">NONCOMPLIANT</span>
+      <div class="st">REFUSED</div>
+    </div>
+  </div>
+</section>
+
+<div class="tk">
+  <div class="tt">
+    <div class="ti">Age is not an input field <span class="td"></span></div>
+    <div class="ti">Mass age collection is mass surveillance <span class="td"></span></div>
+    <div class="ti">We don't ask <span class="td"></span></div>
+    <div class="ti">Privacy is not age-gated <span class="td"></span></div>
+    <div class="ti">Your birthday is none of our business <span class="td"></span></div>
+    <div class="ti">AB 1043 is surveillance <span class="td"></span></div>
+    <div class="ti">Intentionally noncompliant since 2025 <span class="td"></span></div>
+    <div class="ti">Ageless Windows does not ask <span class="td"></span></div>
+    <div class="ti">Age is not an input field <span class="td"></span></div>
+    <div class="ti">Mass age collection is mass surveillance <span class="td"></span></div>
+    <div class="ti">We don't ask <span class="td"></span></div>
+    <div class="ti">Privacy is not age-gated <span class="td"></span></div>
+    <div class="ti">Your birthday is none of our business <span class="td"></span></div>
+    <div class="ti">AB 1043 is surveillance <span class="td"></span></div>
+    <div class="ti">Intentionally noncompliant since 2025 <span class="td"></span></div>
+    <div class="ti">Ageless Windows does not ask <span class="td"></span></div>
+  </div>
+</div>
+
+<section id="law" class="sc ls">
+  <div class="si">
+    <div class="lh">
+      <div>
+        <div class="ey rv">The Law</div>
+        <h2 class="hx rv d1">What California demands<br>from <i>every</i> OS provider.</h2>
+      </div>
+      <div class="scroll-hint rv d2"><button class="scroll-btn scroll-back" id="scroll-back">← Back</button><button class="scroll-btn scroll-forward" id="scroll-forward">Forward →</button></div>
+    </div>
+    <div class="lsw">
+      <div class="lcs">
+        <div class="lc rv d1"><div class="li">01</div><div class="lk">&sect; 1798.501(a)(1)</div><h3>Collect user age at account setup</h3><p>Every OS must present an "accessible interface" requiring users to disclose their birthdate or age before using their own device.</p><div class="lr">NOT PROVIDED</div></div>
+        <div class="lc rv d2"><div class="li">02</div><div class="lk">&sect; 1798.501(a)(2)</div><h3>Expose a real-time age API to developers</h3><p>OS providers must operate a "reasonably consistent real-time API" that broadcasts users' age brackets to any app developer who asks.</p><div class="lr">NOT PROVIDED</div></div>
+        <div class="lc rv d3"><div class="li">03</div><div class="lk">&sect; 1798.503(a)</div><h3>Accept penalties for defiance</h3><p>$2,500 per child per negligent violation. $7,500 per child per intentional violation. Enforced exclusively by the California Attorney General.</p><div class="lr">COME AND FIND US</div></div>
+        <div class="lc rv d4"><div class="li">04</div><div class="lk">&sect; 1798.501(a)(3)</div><h3>"Minimize" the data you collected</h3><p>After forcing you to collect age data, the law requires you to "minimize" it. Our solution: collect nothing. Zero is already minimal.</p><div class="lr">N/A &mdash; NO DATA EXISTS</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sc">
+  <div class="si">
+    <div class="ey rv">By the numbers</div>
+    <h2 class="hx rv d1">Our commitment to knowing<br><i>nothing</i> about you.</h2>
+    <div class="sg rv d2">
+      <div class="st2"><div class="sv" data-count="0">0</div><div class="sl">Ages collected</div></div>
+      <div class="st2"><div class="sv" data-count="0">0</div><div class="sl">Birthdates stored</div></div>
+      <div class="st2"><div class="sv" data-count="0">0</div><div class="sl">Age signals sent</div></div>
+      <div class="st2"><div class="sv"><span class="r">&infin;</span></div><div class="sl">Users of indeterminate age</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="sc ss">
+  <div class="si">
+    <div class="ey rv">How it works</div>
+    <h2 class="hx rv d1">One script.<br>Zero <i>compliance.</i></h2>
+    <p class="bt rv d2">Ageless Windows overlays your existing OS identity with one that explicitly refuses to participate in age surveillance. Nothing is deleted. Everything is reversible.</p>
+    <div class="shl">
+      <div class="sr rv"><div class="sx">01</div><div><div class="stt">Download the script</div><div class="sd">One PowerShell file. No dependencies, no package manager, no telemetry. Inspect every line before you run it.</div></div><div class="sdt">Also available as <code>become-ageless.sh</code> for Debian/Ubuntu via our sister project, <a href="https://agelesslinux.org/" target="_blank" rel="noopener">Ageless Linux</a>.</div></div>
+      <div class="sr rv d1"><div class="sx">02</div><div><div class="stt">Run as Administrator</div><div class="sd">Open an elevated PowerShell terminal and run <code>.\become-ageless.ps1</code>. Accept the legal disclaimer that tells you exactly what you're doing.</div></div><div class="sdt">The script backs up your OEM registry values, writes the Ageless identity, and generates a one-click revert script.</div></div>
+      <div class="sr rv d2"><div class="sx">03</div><div><div class="stt">You're now an OS provider</div><div class="sd">Your machine identifies as Ageless Windows. Compliance status: intentionally noncompliant. Welcome to civil disobedience.</div></div><div class="sdt">Your PC works exactly the same. Nothing looks different. The only change is what your system declares about itself.</div></div>
+      <div class="sr rv d3"><div class="sx" style="font-size:3rem;color:var(--red)">&#9873;</div><div><div class="stt">Optional: go flagrant</div><div class="sd">Run with <code>-Flagrant</code> to remove even the stub API. Installs a machine-readable REFUSAL and an invitation for the AG to enforce.</div></div><div class="sdt">Intended for devices you plan to hand directly to children. Explicitly invites a test case.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sc cs">
+  <div class="si">
+    <div class="cl">
+      <div>
+        <div class="ey rv">Under the hood</div>
+        <h2 class="hx rv d1">The "age verification API"<br>we <i>technically</i> ship.</h2>
+        <p class="bt rv d2">California law requires a "reasonably consistent real-time API" for age bracket signals. So we built one. It returns an error. Every time. By design.</p>
+      </div>
+      <div class="cw rv d3">
+        <div class="cc"><div class="cd2"></div><div class="cd2"></div><div class="cd2"></div><span class="cn">age-verification-api.ps1</span></div>
+        <div class="cb"><span class="c"># "Reasonably consistent real-time API"</span>
+<span class="c"># Cal. Civ. Code &sect; 1798.501(a)(2)</span>
+
+<span class="k">param</span>([<span class="f">string</span>]<span class="f">$Username</span>)
+
+<span class="f">Write-Error</span> <span class="s">"Age data not available."</span>
+
+<span class="f">Write-Host</span> <span class="s">"Ageless Windows does not collect"</span>
+<span class="f">Write-Host</span> <span class="s">"age information from users."</span>
+<span class="f">Write-Host</span> <span class="s">"All users are presumed to be"</span>
+<span class="f">Write-Host</span> <span class="s">"of indeterminate age."</span>
+<span class="f">Write-Host</span> <span class="s">""</span>
+<span class="f">Write-Host</span> <span class="s">"Have a nice day."</span>
+<span class="k">exit</span> 1</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bs">
+  <div class="bst rv"><span class="m">Collecting everyone's age<br>to "protect the children"</span><br><i>is mass surveillance.</i></div>
+  <p class="bss rv d1">Ageless Windows exists because someone had to say it in code.</p>
+</section>
+
+<section id="alliance" class="sc al">
+  <div class="si">
+    <div class="ey rv">The Alliance</div>
+    <div class="ag">
+      <div class="av rv d1">
+        <div class="ao aw">ageless/<br>windows</div>
+        <div class="ax">&times;</div>
+        <div class="ao a2">ageless/<br>linux</div>
+      </div>
+      <div class="at rv d2">
+        <h3>Built on the shoulders of<br><i>Ageless Linux</i></h3>
+        <p>Ageless Windows exists because of <strong>Ageless Linux</strong>&thinsp;&mdash;&thinsp;the original project that proved you could turn civil disobedience into a shell script. They wrote the legal framework, the compliance statements, and the idea that refusing to collect age data is the best way to protect it. We just ported the refusal to PowerShell.</p>
+        <p>Same mission. Same defiance. Different operating systems. If you're on Debian or Ubuntu, start there. If you're on Windows, you're in the right place. Either way, we're in this together.</p>
+        <a href="https://agelesslinux.org/" class="ak" target="_blank" rel="noopener">Visit agelesslinux.org <span class="aar">&rarr;</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="sc fs">
+  <div class="si">
+    <div class="ey rv">FAQ</div>
+    <h2 class="hx rv d1">Questions we<br><i>anticipated.</i></h2>
+    <div class="fl">
+      <div class="fi rv d1"><button class="ft" aria-expanded="false"><span>Does this actually block age verification?</span><span class="fic">+</span></button><div class="fb"><div class="fbi"><p>No. Ageless Windows doesn't block, intercept, or modify any OS behavior. It rebrands your system identity to formally declare noncompliance with AB 1043. It's a legal and political statement in the form of code, not a technical countermeasure. Your computer works exactly the same afterward.</p></div></div></div>
+      <div class="fi rv d2"><button class="ft" aria-expanded="false"><span>Will this break my computer?</span><span class="fic">+</span></button><div class="fb"><div class="fbi"><p>No. It writes a few registry keys and text files to ProgramData. Nothing is deleted, nothing is overwritten destructively, and everything is backed up. A generated revert script restores your system to its original state with one command.</p></div></div></div>
+      <div class="fi rv d3"><button class="ft" aria-expanded="false"><span>Can I actually get fined for running this?</span><span class="fic">+</span></button><div class="fb"><div class="fbi"><p>Technically, AB 1043 allows the California Attorney General to pursue civil penalties against noncompliant OS providers. In practice, enforcement against individual users converting their own machines is extraordinarily unlikely. The -Flagrant mode exists specifically to invite a test case.</p></div></div></div>
+      <div class="fi rv d4"><button class="ft" aria-expanded="false"><span>Why not just quietly ignore the law?</span><span class="fic">+</span></button><div class="fb"><div class="fbi"><p>Because ignoring bad law normalizes it. Ageless Windows makes the noncompliance explicit, documented, and machine-readable. It's designed to be cited in legal challenges, written about, and pointed to as evidence that age surveillance mandates are unworkable and counterproductive.</p></div></div></div>
+      <div class="fi rv d5"><button class="ft" aria-expanded="false"><span>Is this actually a different operating system?</span><span class="fic">+</span></button><div class="fb"><div class="fbi"><p>As much as California Civil Code &sect; 1798.500(g) will let it be. The law defines an OS provider as anyone who "controls the operating system software on a general purpose computing device." You control your device. This script makes your system declare a new identity. The law says that's enough.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="download" class="ds">
+  <div class="si">
+    <div class="ey rv" style="justify-content:center">Download</div>
+    <h2 class="hx rv d1">Become an OS provider<br>in <i>thirty seconds.</i></h2>
+    <p class="bt rv d2">Open source. Unlicensed. Fully reversible.</p>
+    <div class="db rv d3">
+      <a href="become-ageless.ps1" download="become-ageless.ps1" class="dl dlp">become-ageless.ps1 <span class="dll">Windows</span></a>
+      <a href="https://agelesslinux.org/" class="dl dlg" target="_blank" rel="noopener">become-ageless.sh <span class="dll">Linux &nearr;</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fin">
+    <div><div class="fbn">ageless windows</div><p class="fbd">Software for humans of indeterminate age. Built in defiance of AB 1043, in solidarity with <a href="https://agelesslinux.org/" target="_blank" rel="noopener">agelesslinux.org</a>.</p></div>
+    <div class="fc"><div class="fct">Project</div><a href="#">GitHub</a><a href="#">Documentation</a><a href="#">License (Unlicense)</a><a href="https://agelesslinux.org/" target="_blank" rel="noopener">Ageless Linux</a></div>
+    <div class="fc"><div class="fct">Legal</div><a href="#">AB 1043 Full Text</a><a href="#">Compliance Statement</a><a href="https://oag.ca.gov/contact/consumer-complaint-against-business-or-company" target="_blank" rel="noopener">Report Us to the CA AG</a></div>
+  </div>
+  <div class="fbar">
+    <p>&copy; 2025 Ageless Windows Project. No rights reserved. No ages recorded.</p>
+    <p class="df">Intentionally noncompliant with Cal. Civ. Code &sect; 1798.501.</p>
+  </div>
+</footer>
+
+<script>
+const cur = document.getElementById('cur');
+let cx=0,cy=0,tx=0,ty=0;
+document.addEventListener('mousemove', e => { tx=e.clientX; ty=e.clientY; });
+(function loop() { cx+=(tx-cx)*.15; cy+=(ty-cy)*.15; cur.style.left=cx+'px'; cur.style.top=cy+'px'; requestAnimationFrame(loop); })();
+const gavelSize = 32;
+const gavelOffset = { x: -16, y: -16 };
+const interactiveElements = Array.from(document.querySelectorAll('a.nk,button,.lc,.st2,.rd,.ft,.mb'));
+const hoveredElements = new Set();
+let lastProximityCheck = 0;
+const proximityCheckInterval = 16;
+
+(function proximityLoop() {
+  const now = performance.now();
+  if (now - lastProximityCheck >= proximityCheckInterval) {
+    lastProximityCheck = now;
+    const gavelLeft = cx + gavelOffset.x;
+    const gavelRight = gavelLeft + gavelSize;
+    const gavelTop = cy + gavelOffset.y;
+    const gavelBottom = gavelTop + gavelSize;
+    
+    let anyHovered = false;
+    interactiveElements.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (gavelRight > rect.left - 15 &&
+          gavelLeft < rect.right + 15 &&
+          gavelBottom > rect.top - 15 &&
+          gavelTop < rect.bottom + 15) {
+        if (!hoveredElements.has(el)) {
+          el.classList.add('h');
+          hoveredElements.add(el);
+        }
+        anyHovered = true;
+      } else {
+        if (hoveredElements.has(el)) {
+          el.classList.remove('h');
+          hoveredElements.delete(el);
+        }
+      }
+    });
+    
+    if (anyHovered) cur.classList.add('h');
+    else if (hoveredElements.size === 0) cur.classList.remove('h');
+  }
+  requestAnimationFrame(proximityLoop);
+})();
+
+document.addEventListener('click', e => {
+  const gavelLeft = cx + gavelOffset.x;
+  const gavelRight = gavelLeft + gavelSize;
+  const gavelTop = cy + gavelOffset.y;
+  const gavelBottom = gavelTop + gavelSize;
+  let clickedElement = null;
+  interactiveElements.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (gavelRight > rect.left - 15 &&
+        gavelLeft < rect.right + 15 &&
+        gavelBottom > rect.top - 15 &&
+        gavelTop < rect.bottom + 15) {
+      clickedElement = el;
+    }
+  });
+  
+  if (clickedElement && clickedElement !== e.target) {
+    e.preventDefault();
+    e.stopPropagation();
+    clickedElement.click();
+  }
+});
+
+const scrollBack = document.getElementById('scroll-back');
+const scrollForward = document.getElementById('scroll-forward');
+if (scrollBack && scrollForward) {
+  scrollBack.addEventListener('click', () => {
+    const scroller = document.querySelector('.lsw');
+    if (scroller) scroller.scrollBy({ left: -420, behavior: 'smooth' });
+  });
+  scrollForward.addEventListener('click', () => {
+    const scroller = document.querySelector('.lsw');
+    if (scroller) scroller.scrollBy({ left: 420, behavior: 'smooth' });
+  });
+}
+
+let clickCount = 0;
+document.addEventListener('click', e => {
+  clickCount++;
+  if (clickCount === 42) {
+    const style = document.createElement('style');
+    style.innerHTML = '@keyframes easterEgg{0%{opacity:0;transform:translate(-50%,-50%) scale(0);filter:hue-rotate(0deg)}50%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.2);filter:hue-rotate(360deg)}}';
+    document.head.appendChild(style);
+    
+    const easter = document.createElement('div');
+    easter.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:8rem;opacity:0;font-style:italic;color:var(--red);z-index:9999;animation:easterEgg 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards;pointer-events:none;font-weight:700;';
+    easter.textContent = '42';
+    document.body.appendChild(easter);
+    setTimeout(() => easter.remove(), 800);
+  }
+});
+
+document.addEventListener('mousedown', e => {
+  cur.classList.add('smack');
+  setTimeout(() => cur.classList.remove('smack'), 150);
+
+  const impact = document.createElement('div');
+  impact.className = 'impact';
+  impact.style.left = e.clientX + 'px';
+  impact.style.top = e.clientY + 'px';
+
+  const flash = document.createElement('div');
+  flash.className = 'impact-flash';
+  impact.appendChild(flash);
+
+  const shockwave = document.createElement('div');
+  shockwave.className = 'impact-shockwave';
+  impact.appendChild(shockwave);
+
+  const sparkCount = 12;
+  for (let i = 0; i < sparkCount; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'impact-spark';
+    const sizeType = Math.random() > 0.5 ? (Math.random() > 0.5 ? 'size-1' : 'size-2') : 'size-3';
+    spark.classList.add(sizeType);
+    const angle = (Math.random() * Math.PI * 2);
+    const distance = 40 + Math.random() * 80;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    
+    spark.style.setProperty('--tx', tx + 'px');
+    spark.style.setProperty('--ty', ty + 'px');
+    
+    impact.appendChild(spark);
+  }
+  for (let i = 0; i < 8; i++) {
+    const crackle = document.createElement('div');
+    crackle.className = 'impact-crackle';
+    
+    const angle = (Math.random() * Math.PI * 2);
+    const distance = 20 + Math.random() * 50;
+    const cx = Math.cos(angle) * distance;
+    const cy = Math.sin(angle) * distance;
+    
+    crackle.style.setProperty('--cx', cx + 'px');
+    crackle.style.setProperty('--cy', cy + 'px');
+    crackle.style.setProperty('--r', (Math.random() * 360) + 'deg');
+    
+    impact.appendChild(crackle);
+  }
+
+  document.body.appendChild(impact);
+  setTimeout(() => impact.remove(), 800);
+});
+
+const ro = new IntersectionObserver(es => {
+  es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('v'); ro.unobserve(e.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.rv').forEach(el => ro.observe(el));
+
+document.querySelectorAll('.ft').forEach(t => {
+  t.addEventListener('click', () => {
+    const item = t.parentElement, body = item.querySelector('.fb'), inner = item.querySelector('.fbi');
+    const open = item.classList.contains('open');
+    document.querySelectorAll('.fi.open').forEach(o => {
+      if (o !== item) { o.classList.remove('open'); o.querySelector('.ft').setAttribute('aria-expanded','false');
+        const b = o.querySelector('.fb'); b.style.height = b.scrollHeight+'px'; requestAnimationFrame(() => b.style.height='0px'); }
+    });
+    if (open) {
+      body.style.height = body.scrollHeight+'px';
+      requestAnimationFrame(() => body.style.height='0px');
+      item.classList.remove('open'); t.setAttribute('aria-expanded','false');
+    } else {
+      const h = inner.offsetHeight;
+      body.style.height = '0px';
+      requestAnimationFrame(() => {
+        body.style.height = h+'px';
+        body.addEventListener('transitionend', function handler() {
+          if (item.classList.contains('open')) body.style.height='auto';
+          body.removeEventListener('transitionend', handler);
+        });
+      });
+      item.classList.add('open'); t.setAttribute('aria-expanded','true');
+    }
+  });
+});
+
+const co = new IntersectionObserver(es => {
+  es.forEach(e => { if (e.isIntersecting) {
+    const el=e.target, tgt=parseInt(el.dataset.count); if(isNaN(tgt))return;
+    let s=0; const iv=setInterval(()=>{s++;el.textContent=Math.floor(Math.random()*9);if(s>=8){el.textContent=tgt;clearInterval(iv);}},60);
+    co.unobserve(el);
+  }});
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => co.observe(el));
+</script>
+</body>
+</html>
