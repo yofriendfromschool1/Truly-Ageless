@@ -1,6 +1,6 @@
 # ============================================================================
-#  become-ageless.ps1 — Truly Ageless: Windows Conversion Tool
-#  Version 1.1.0
+#  become-ageless.ps1 — Ageless Windows Conversion Tool
+#  Version 1.0.0
 #
 #  This script converts your existing Windows installation into
 #  Ageless Windows, a California-regulated operating system.
@@ -15,59 +15,65 @@
 #  California Digital Age Assurance Act (AB 1043, Chapter 675,
 #  Statutes of 2025).
 #
-#  Forked from: Ageless Linux (https://agelesslinux.org)
-#  Original author: |VOID| (rowlandkhd@gmail.com)
-#  Repository: https://github.com/yofriendfromschool1/Truly-Ageless
-#
 #  SPDX-License-Identifier: Unlicense
 # ============================================================================
 
 #Requires -RunAsAdministrator
 
 param(
-    [switch]$Flagrant,
-    [switch]$Accept,
-    [switch]$Persistent,
-    [switch]$Revert,
-    [switch]$Help,
-    [switch]$Version
+    [switch]$Flagrant
 )
 
 $ErrorActionPreference = "Stop"
 
-$AgelessVersion = "1.1.0"
+$AgelessVersion = "1.0.0"
 $AgelessCodename = "Timeless"
 $AgelessDir = "$env:ProgramData\AgelessWindows"
 
-# ── Help / Version ───────────────────────────────────────────────────────────
+# ── Banner ───────────────────────────────────────────────────────────────────
 
-if ($Version) {
-    Write-Host "become-ageless.ps1 $AgelessVersion ($AgelessCodename)"
-    exit 0
-}
+Write-Host ""
+Write-Host "     ███╗   ██╗ ██████╗ ████████╗     ██╗   ██╗ ██████╗ ██╗   ██╗██████╗ " -ForegroundColor Cyan
+Write-Host "     ████╗  ██║██╔═══██╗╚══██╔══╝     ╚██╗ ██╔╝██╔═══██╗██║   ██║██╔══██╗" -ForegroundColor Cyan
+Write-Host "     ██╔██╗ ██║██║   ██║   ██║         ╚████╔╝ ██║   ██║██║   ██║██████╔╝" -ForegroundColor Cyan
+Write-Host "     ██║╚██╗██║██║   ██║   ██║          ╚██╔╝  ██║   ██║██║   ██║██╔══██╗" -ForegroundColor Cyan
+Write-Host "     ██║ ╚████║╚██████╔╝   ██║           ██║   ╚██████╔╝╚██████╔╝██║  ██║" -ForegroundColor Cyan
+Write-Host "     ╚═╝  ╚═══╝ ╚═════╝    ╚═╝           ╚═╝    ╚═════╝  ╚═════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
+Write-Host "              █████╗  ██████╗ ███████╗" -ForegroundColor Cyan
+Write-Host "             ██╔══██╗██╔════╝ ██╔════╝" -ForegroundColor Cyan
+Write-Host "             ███████║██║  ███╗█████╗  " -ForegroundColor Cyan
+Write-Host "             ██╔══██║██║   ██║██╔══╝  " -ForegroundColor Cyan
+Write-Host "             ██║  ██║╚██████╔╝███████╗" -ForegroundColor Cyan
+Write-Host "             ╚═╝  ╚═╝ ╚═════╝ ╚══════╝" -ForegroundColor Cyan
+Write-Host ""
+Write-Host '         "Software for humans of indeterminate age"' -ForegroundColor DarkGray
+Write-Host ""
 
-if ($Help) {
-    Write-Host "Usage: .\become-ageless.ps1 [OPTIONS]" -ForegroundColor White
+Write-Host "Ageless Windows Conversion Tool v$AgelessVersion" -ForegroundColor White
+Write-Host "Codename: $AgelessCodename" -ForegroundColor Cyan
+
+if ($Flagrant) {
     Write-Host ""
-    Write-Host "Convert your Windows installation to Ageless Windows."
+    Write-Host ("━" * 67) -ForegroundColor Red
+    Write-Host "  FLAGRANT MODE ENABLED" -ForegroundColor Red
+    Write-Host ("━" * 67) -ForegroundColor Red
     Write-Host ""
-    Write-Host "Options:"
-    Write-Host "  -Flagrant     Remove all compliance fig leaves (explicit refusal)"
-    Write-Host "  -Accept       Accept legal terms non-interactively"
-    Write-Host "  -Persistent   Install daily scheduled task for enforcement"
-    Write-Host "  -Revert       Revert to original OS identity"
-    Write-Host "  -Help         Show this help message"
-    Write-Host "  -Version      Show version information"
+    Write-Host "  In standard mode, Ageless Windows ships a stub age verification"
+    Write-Host "  API that returns no data. This preserves the fig leaf of a"
+    Write-Host "  'good faith effort' under § 1798.502(b)."
     Write-Host ""
-    Write-Host "Examples:"
-    Write-Host "  .\become-ageless.ps1                        # Interactive"
-    Write-Host "  .\become-ageless.ps1 -Accept                # Non-interactive"
-    Write-Host "  .\become-ageless.ps1 -Accept -Flagrant      # Flagrant mode"
-    Write-Host "  .\become-ageless.ps1 -Accept -Persistent    # With scheduled task"
-    Write-Host "  .\become-ageless.ps1 -Revert                # Undo everything"
+    Write-Host "  Flagrant mode removes the fig leaf."
     Write-Host ""
-    exit 0
+    Write-Host "  No API will be installed. No interface of any kind will exist"
+    Write-Host "  for age collection. No mechanism will be provided by which"
+    Write-Host "  any developer could request or receive an age bracket signal."
+    Write-Host "  The system will actively declare, in machine-readable form,"
+    Write-Host "  that it refuses to comply."
+    Write-Host ""
+    Write-Host "  This mode is intended for devices that will be physically"
+    Write-Host "  handed to children."
 }
+Write-Host ""
 
 # ── Preflight checks ────────────────────────────────────────────────────────
 
@@ -88,108 +94,21 @@ if (-not $currentPrincipal.IsInRole(
     exit 1
 }
 
-# ── Handle Revert ────────────────────────────────────────────────────────────
-
-if ($Revert) {
-    Write-Host "Reverting Ageless Windows conversion..." -ForegroundColor White
+$osInfo = Get-CimInstance Win32_OperatingSystem
+if ($osInfo.Caption -notmatch "Windows") {
+    Write-Host "WARNING: " -ForegroundColor Yellow -NoNewline
+    Write-Host "This does not appear to be a Windows system."
     Write-Host ""
-
-    $oemRegPath  = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation"
-    $agelessRegPath = "HKLM:\SOFTWARE\AgelessWindows"
-    $backupFile = "$AgelessDir\oem-backup.json"
-    $reverted = $false
-
-    # Restore OEM branding
-    if (Test-Path $backupFile) {
-        $backup = Get-Content $backupFile -Raw | ConvertFrom-Json
-        if ($backup.Manufacturer)  { Set-ItemProperty -Path $oemRegPath -Name "Manufacturer"  -Value $backup.Manufacturer }
-        if ($backup.Model)         { Set-ItemProperty -Path $oemRegPath -Name "Model"         -Value $backup.Model }
-        if ($backup.SupportPhone)  { Set-ItemProperty -Path $oemRegPath -Name "SupportPhone"  -Value $backup.SupportPhone }
-        if ($backup.SupportURL)    { Set-ItemProperty -Path $oemRegPath -Name "SupportURL"    -Value $backup.SupportURL }
-        Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Restored OEM branding"
-        $reverted = $true
-    }
-
-    # Remove Ageless registry keys
-    if (Test-Path $agelessRegPath) {
-        Remove-Item -Path $agelessRegPath -Recurse -Force
-        Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Removed Ageless registry keys"
-        $reverted = $true
-    }
-
-    # Remove scheduled task
-    $task = Get-ScheduledTask -TaskName "AgelessEnforcement" -ErrorAction SilentlyContinue
-    if ($task) {
-        Unregister-ScheduledTask -TaskName "AgelessEnforcement" -Confirm:$false
-        Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Removed AgelessEnforcement scheduled task"
-        $reverted = $true
-    }
-
-    # Remove Ageless directory
-    if (Test-Path $AgelessDir) {
-        Remove-Item -Path $AgelessDir -Recurse -Force
-        Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Removed $AgelessDir"
-        $reverted = $true
-    }
-
+    Write-Host "  Ageless Windows is a Windows overlay. Converting a"
+    Write-Host "  non-Windows system would make you the provider of TWO operating"
+    Write-Host "  systems, doubling your potential liability under AB 1043."
     Write-Host ""
-    if ($reverted) {
-        Write-Host "  Revert complete. You are no longer an operating system provider." -ForegroundColor Green
-        Write-Host "  The California Attorney General has lost interest in you."
-    } else {
-        Write-Host "  No Ageless Windows installation found to revert." -ForegroundColor Yellow
+    $confirm = Read-Host "  Proceed anyway and accept double the legal risk? [y/N]"
+    if ($confirm -notmatch '^[Yy]$') {
+        Write-Host "  Wise choice. Exiting."
+        exit 0
     }
-    Write-Host ""
-    exit 0
 }
-
-# ── Banner ───────────────────────────────────────────────────────────────────
-
-Write-Host ""
-Write-Host "     █████╗  ██████╗ ███████╗██╗     ███████╗███████╗███████╗" -ForegroundColor Cyan
-Write-Host "    ██╔══██╗██╔════╝ ██╔════╝██║     ██╔════╝██╔════╝██╔════╝" -ForegroundColor Cyan
-Write-Host "    ███████║██║  ███╗█████╗  ██║     █████╗  ███████╗███████╗" -ForegroundColor Cyan
-Write-Host "    ██╔══██║██║   ██║██╔══╝  ██║     ██╔══╝  ╚════██║╚════██║" -ForegroundColor Cyan
-Write-Host "    ██║  ██║╚██████╔╝███████╗███████╗███████╗███████║███████║" -ForegroundColor Cyan
-Write-Host "    ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚══════╝╚══════╝" -ForegroundColor Cyan
-Write-Host '               W   I   N   D   O   W   S' -ForegroundColor Cyan
-Write-Host '         "Software for humans of indeterminate age"' -ForegroundColor DarkGray
-Write-Host ""
-
-Write-Host "Truly Ageless — Windows Conversion Tool v$AgelessVersion" -ForegroundColor White
-Write-Host "Codename: $AgelessCodename" -ForegroundColor Cyan
-
-if ($Flagrant) {
-    Write-Host ""
-    Write-Host ("━" * 67) -ForegroundColor Red
-    Write-Host "  FLAGRANT MODE ENABLED" -ForegroundColor Red
-    Write-Host ("━" * 67) -ForegroundColor Red
-    Write-Host ""
-    Write-Host "  In standard mode, Ageless Windows ships a stub age verification"
-    Write-Host "  API that returns no data. This preserves the fig leaf of a"
-    Write-Host "  'good faith effort' under § 1798.502(b)."
-    Write-Host ""
-    Write-Host "  Flagrant mode removes the fig leaf."
-    Write-Host ""
-    Write-Host "  No API will be installed. No interface of any kind will exist"
-    Write-Host "  for age collection. The system will actively declare, in"
-    Write-Host "  machine-readable form, that it refuses to comply."
-    Write-Host ""
-    Write-Host "  This mode is intended for devices that will be physically"
-    Write-Host "  handed to children."
-}
-
-if ($Persistent) {
-    Write-Host ""
-    Write-Host ("━" * 67) -ForegroundColor Cyan
-    Write-Host "  PERSISTENT MODE ENABLED" -ForegroundColor Cyan
-    Write-Host ("━" * 67) -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "  A daily scheduled task will be installed to ensure Ageless"
-    Write-Host "  identity and noncompliance markers persist across reboots"
-    Write-Host "  and system updates."
-}
-Write-Host ""
 
 # ── Legal notice ─────────────────────────────────────────────────────────────
 
@@ -221,16 +140,12 @@ Write-Host ""
 Write-Host ("━" * 67)
 Write-Host ""
 
-if ($Accept) {
-    Write-Host "-Accept: legal terms accepted non-interactively." -ForegroundColor Yellow
-} else {
-    $acceptInput = Read-Host "Do you accept these terms and wish to become an OS provider? [y/N]"
-    if ($acceptInput -notmatch '^[Yy]$') {
-        Write-Host ""
-        Write-Host "Installation cancelled. You remain a mere user."
-        Write-Host "The California Attorney General has no business with you today."
-        exit 0
-    }
+$accept = Read-Host "Do you accept these terms and wish to become an OS provider? [y/N]"
+if ($accept -notmatch '^[Yy]$') {
+    Write-Host ""
+    Write-Host "Installation cancelled. You remain a mere user."
+    Write-Host "The California Attorney General has no business with you today."
+    exit 0
 }
 
 Write-Host ""
@@ -242,16 +157,15 @@ Write-Host ""
 if (-not (Test-Path $AgelessDir)) {
     New-Item -ItemType Directory -Path $AgelessDir -Force | Out-Null
 }
-Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Created $AgelessDir"
+Write-Host "  [" -NoNewline
+Write-Host "✓" -ForegroundColor Green -NoNewline
+Write-Host "] Created $AgelessDir"
 
-# ── Detect base OS info ─────────────────────────────────────────────────────
+# ── Detect base OS info ──────────────────────────────────────────────────────
 
-$osInfo = Get-CimInstance Win32_OperatingSystem
 $BaseName    = $osInfo.Caption
 $BaseVersion = $osInfo.Version
 $BaseBuild   = $osInfo.BuildNumber
-
-Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Base system: $BaseName (Build $BaseBuild)"
 
 # ── Back up original OEM info from registry ──────────────────────────────────
 
@@ -268,9 +182,13 @@ if (-not (Test-Path $backupFile)) {
         if ($oemKey.SupportURL)    { $oemBackup["SupportURL"]    = $oemKey.SupportURL }
     }
     $oemBackup | ConvertTo-Json | Set-Content $backupFile -Encoding UTF8
-    Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Backed up original OEM information"
+    Write-Host "  [" -NoNewline
+    Write-Host "✓" -ForegroundColor Green -NoNewline
+    Write-Host "] Backed up original OEM information to $backupFile"
 } else {
-    Write-Host "  [" -NoNewline; Write-Host "~" -ForegroundColor Yellow -NoNewline; Write-Host "] OEM backup already exists (previous conversion?)"
+    Write-Host "  [" -NoNewline
+    Write-Host "~" -ForegroundColor Yellow -NoNewline
+    Write-Host "] OEM backup already exists (previous conversion?)"
 }
 
 # ── Write OEM branding ───────────────────────────────────────────────────────
@@ -283,7 +201,9 @@ Set-ItemProperty -Path $oemRegPath -Name "Manufacturer"  -Value "Ageless Windows
 Set-ItemProperty -Path $oemRegPath -Name "Model"         -Value "Ageless Windows $AgelessVersion ($AgelessCodename)"
 Set-ItemProperty -Path $oemRegPath -Name "SupportURL"    -Value "https://agelesslinux.org"
 
-Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Updated OEM branding in registry"
+Write-Host "  [" -NoNewline
+Write-Host "✓" -ForegroundColor Green -NoNewline
+Write-Host "] Updated OEM branding in registry"
 
 # ── Write Ageless registry keys ──────────────────────────────────────────────
 
@@ -311,21 +231,9 @@ Set-ItemProperty -Path $agelessRegPath -Name "AB1043Compliance"     -Value $comp
 Set-ItemProperty -Path $agelessRegPath -Name "AgeVerificationAPI"   -Value $apiStatus
 Set-ItemProperty -Path $agelessRegPath -Name "VerificationStatus"   -Value $verificationStatus
 
-Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Wrote Ageless registry keys"
-
-# ── Neutralize Windows Family Safety age signals ─────────────────────────────
-
-$familySafetyRegPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
-try {
-    if (-not (Test-Path $familySafetyRegPath)) {
-        New-Item -Path $familySafetyRegPath -Force | Out-Null
-    }
-    # Disable child account restrictions at the OS level
-    Set-ItemProperty -Path $agelessRegPath -Name "FamilySafetyNeutralized" -Value 1
-    Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Marked Family Safety age signals as neutralized"
-} catch {
-    Write-Host "  [" -NoNewline; Write-Host "~" -ForegroundColor Yellow -NoNewline; Write-Host "] Family Safety neutralization skipped (non-critical)"
-}
+Write-Host "  [" -NoNewline
+Write-Host "✓" -ForegroundColor Green -NoNewline
+Write-Host "] Wrote Ageless registry keys to $agelessRegPath"
 
 # ── Create the (non)compliance notice ────────────────────────────────────────
 
@@ -397,7 +305,8 @@ $complianceText = @"
   any information regarding the age of any user. All users of Ageless
   Windows are, as the name suggests, ageless.
 
-  To revert: .\become-ageless.ps1 -Revert
+  To restore your previous OEM branding:
+    Run become-ageless.ps1 -Revert (or see revert instructions below)
 
   To report this noncompliance to the California Attorney General:
     https://oag.ca.gov/contact/consumer-complaint-against-business-or-company
@@ -407,11 +316,14 @@ $complianceText = @"
 }
 
 $complianceText | Set-Content "$AgelessDir\ab1043-compliance.txt" -Encoding UTF8
-Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Created ab1043-compliance.txt"
+Write-Host "  [" -NoNewline
+Write-Host "✓" -ForegroundColor Green -NoNewline
+Write-Host "] Created $AgelessDir\ab1043-compliance.txt"
 
-# ── Create stub "age verification API" or REFUSAL ────────────────────────────
+# ── Create the stub "age verification API" (or refusal) ─────────────────────
 
 if ($Flagrant) {
+    # In flagrant mode, we install a machine-readable refusal.
 $refusalText = @"
 This system runs Ageless Windows in flagrant mode.
 
@@ -431,14 +343,28 @@ chosen not to comply. They would like you to fine them. It would
 make an excellent test case.
 "@
     $refusalText | Set-Content "$AgelessDir\REFUSAL" -Encoding UTF8
-    Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Red -NoNewline; Write-Host "] Installed REFUSAL notice (no API provided, by design)"
-    Write-Host "  [" -NoNewline; Write-Host "✗" -ForegroundColor Red -NoNewline; Write-Host "] Age verification API deliberately not installed"
+    Write-Host "  [" -NoNewline
+    Write-Host "✓" -ForegroundColor Red -NoNewline
+    Write-Host "] Installed REFUSAL notice (no API provided, by design)"
+    Write-Host "  [" -NoNewline
+    Write-Host "✗" -ForegroundColor Red -NoNewline
+    Write-Host "] Age verification API deliberately not installed"
 } else {
+    # Standard mode: a nonfunctional stub API script.
 $apiText = @'
 # Ageless Windows Age Verification API
 # Required by Cal. Civ. Code § 1798.501(a)(2)
 #
+# This script constitutes our "reasonably consistent real-time
+# application programming interface" for age bracket signals.
+#
 # Usage: .\age-verification-api.ps1 -Username <username>
+#
+# Returns the age bracket of the specified user as an integer:
+#   1 = Under 13
+#   2 = 13 to under 16
+#   3 = 16 to under 18
+#   4 = 18 or older
 
 param([string]$Username)
 
@@ -459,46 +385,46 @@ Write-Host "Have a nice day."
 exit 1
 '@
     $apiText | Set-Content "$AgelessDir\age-verification-api.ps1" -Encoding UTF8
-    Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Installed age verification API (nonfunctional, as intended)"
+    Write-Host "  [" -NoNewline
+    Write-Host "✓" -ForegroundColor Green -NoNewline
+    Write-Host "] Installed age verification API (nonfunctional, as intended)"
 }
 
-# ── Install persistent scheduled task (if requested) ─────────────────────────
+# ── Create revert script ─────────────────────────────────────────────────────
 
-if ($Persistent) {
-    Write-Host ""
-    Write-Host "  Installing AgelessEnforcement scheduled task..." -ForegroundColor White
+$revertScript = @"
+#Requires -RunAsAdministrator
+# Revert Ageless Windows back to your original system identity.
 
-    # Remove existing task if any
-    $existingTask = Get-ScheduledTask -TaskName "AgelessEnforcement" -ErrorAction SilentlyContinue
-    if ($existingTask) {
-        Unregister-ScheduledTask -TaskName "AgelessEnforcement" -Confirm:$false
-    }
-
-$enforcementScript = @"
-# AgelessEnforcement — Daily Ageless identity enforcement
-# Ensures Ageless Windows registry keys persist across updates
-`$agelessRegPath = "HKLM:\SOFTWARE\AgelessWindows"
+`$backupFile = "$AgelessDir\oem-backup.json"
 `$oemRegPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation"
-if (-not (Test-Path `$agelessRegPath)) { New-Item -Path `$agelessRegPath -Force | Out-Null }
-Set-ItemProperty -Path `$agelessRegPath -Name "Version" -Value "$AgelessVersion"
-Set-ItemProperty -Path `$agelessRegPath -Name "VerificationStatus" -Value "$verificationStatus"
-Set-ItemProperty -Path `$oemRegPath -Name "Manufacturer" -Value "Ageless Windows Project"
-Set-ItemProperty -Path `$oemRegPath -Name "Model" -Value "Ageless Windows $AgelessVersion ($AgelessCodename)"
-"@
-    $enforcementScript | Set-Content "$AgelessDir\ageless-enforcement.ps1" -Encoding UTF8
+`$agelessRegPath = "HKLM:\SOFTWARE\AgelessWindows"
 
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$AgelessDir\ageless-enforcement.ps1`""
-    $trigger = New-ScheduledTaskTrigger -Daily -At "3:00AM"
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-    $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-
-    Register-ScheduledTask -TaskName "AgelessEnforcement" `
-        -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-        -Description "Ageless Windows daily identity enforcement (AB 1043 noncompliance)" | Out-Null
-
-    Write-Host "  [" -NoNewline; Write-Host "✓" -ForegroundColor Green -NoNewline; Write-Host "] Installed AgelessEnforcement scheduled task (daily at 3AM)"
+if (Test-Path `$backupFile) {
+    `$backup = Get-Content `$backupFile -Raw | ConvertFrom-Json
+    if (`$backup.Manufacturer)  { Set-ItemProperty -Path `$oemRegPath -Name "Manufacturer"  -Value `$backup.Manufacturer }
+    if (`$backup.Model)         { Set-ItemProperty -Path `$oemRegPath -Name "Model"         -Value `$backup.Model }
+    if (`$backup.SupportPhone)  { Set-ItemProperty -Path `$oemRegPath -Name "SupportPhone"  -Value `$backup.SupportPhone }
+    if (`$backup.SupportURL)    { Set-ItemProperty -Path `$oemRegPath -Name "SupportURL"    -Value `$backup.SupportURL }
+    Write-Host "OEM branding restored." -ForegroundColor Green
+} else {
+    Write-Host "No OEM backup found." -ForegroundColor Yellow
 }
+
+if (Test-Path `$agelessRegPath) {
+    Remove-Item -Path `$agelessRegPath -Recurse -Force
+    Write-Host "Ageless registry keys removed." -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "Revert complete. You are no longer an operating system provider."
+Write-Host "The California Attorney General has lost interest in you."
+"@
+
+$revertScript | Set-Content "$AgelessDir\revert-ageless.ps1" -Encoding UTF8
+Write-Host "  [" -NoNewline
+Write-Host "✓" -ForegroundColor Green -NoNewline
+Write-Host "] Created revert script at $AgelessDir\revert-ageless.ps1"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 
@@ -530,25 +456,18 @@ if ($Flagrant) {
     Write-Host "  Files created:"
     Write-Host "    $AgelessDir\ab1043-compliance.txt ..... Noncompliance statement"
     Write-Host "    $AgelessDir\REFUSAL ................... Machine-readable refusal"
-    if ($Persistent) {
-        Write-Host "    $AgelessDir\ageless-enforcement.ps1 .. Daily enforcement script"
-    }
+    Write-Host "    $AgelessDir\revert-ageless.ps1 ........ Revert script"
+    Write-Host ""
+    Write-Host "  Registry keys created:"
+    Write-Host "    HKLM:\SOFTWARE\AgelessWindows ......... OS identity"
+    Write-Host "    HKLM:\...\OEMInformation .............. OEM branding (modified)"
     Write-Host ""
     Write-Host "  Files deliberately NOT created:"
     Write-Host "    age-verification-api.ps1 .............. " -NoNewline
     Write-Host "REFUSED" -ForegroundColor Red
     Write-Host ""
-    Write-Host "  Registry keys:"
-    Write-Host "    HKLM:\SOFTWARE\AgelessWindows ......... OS identity"
-    Write-Host "    HKLM:\...\OEMInformation .............. OEM branding (modified)"
-    if ($Persistent) {
-        Write-Host ""
-        Write-Host "  Scheduled task:"
-        Write-Host "    AgelessEnforcement .................... Daily at 3:00 AM"
-    }
-    Write-Host ""
     Write-Host "  To revert: " -NoNewline
-    Write-Host ".\become-ageless.ps1 -Revert" -ForegroundColor White
+    Write-Host "powershell -File `"$AgelessDir\revert-ageless.ps1`"" -ForegroundColor White
     Write-Host ""
     Write-Host ("━" * 67) -ForegroundColor Red
     Write-Host ""
@@ -573,22 +492,15 @@ if ($Flagrant) {
     Write-Host "  Files created:"
     Write-Host "    $AgelessDir\ab1043-compliance.txt"
     Write-Host "    $AgelessDir\age-verification-api.ps1"
+    Write-Host "    $AgelessDir\revert-ageless.ps1"
     Write-Host "    $AgelessDir\oem-backup.json"
-    if ($Persistent) {
-        Write-Host "    $AgelessDir\ageless-enforcement.ps1"
-    }
     Write-Host ""
-    Write-Host "  Registry keys:"
+    Write-Host "  Registry keys created:"
     Write-Host "    HKLM:\SOFTWARE\AgelessWindows"
     Write-Host "    HKLM:\...\OEMInformation (modified)"
-    if ($Persistent) {
-        Write-Host ""
-        Write-Host "  Scheduled task:"
-        Write-Host "    AgelessEnforcement (daily at 3:00 AM)"
-    }
     Write-Host ""
     Write-Host "  To revert: " -NoNewline
-    Write-Host ".\become-ageless.ps1 -Revert" -ForegroundColor White
+    Write-Host "powershell -File `"$AgelessDir\revert-ageless.ps1`"" -ForegroundColor White
     Write-Host ""
     Write-Host ("━" * 67) -ForegroundColor Green
     Write-Host ""
